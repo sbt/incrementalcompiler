@@ -11,7 +11,7 @@ package inc
 package classfile
 
 import java.net.URL
-import java.io.{ DataInputStream, File, InputStream }
+import java.io.{ DataInputStream, File, InputStream, ByteArrayInputStream }
 import scala.annotation.switch
 import sbt.io.Using
 
@@ -55,6 +55,27 @@ private[sbt] object Parser {
       lazy val sourceFile =
         for (sourceFileAttribute <- attributes.find(_.isSourceFile))
           yield toUTF8(entryIndex(sourceFileAttribute))
+
+      lazy val innerClasses: Array[InnerClassInfo] = {
+        (for {
+          attr <- attributes.find(_.isInnerClasses)
+        } yield parseInnerClasses(attr)).getOrElse(Array())
+      }
+
+      def parseInnerClasses(a: AttributeInfo) = {
+        require(a.value.length >= 2,
+                s"Expected at least two bytes for unsigned value; got: ${a.value.length}")
+        val bais = new ByteArrayInputStream(a.value)
+        val data = new DataInputStream(bais)
+        def parseInnerClassInfo: InnerClassInfo = {
+          val inner = getClassConstantName(data.readUnsignedShort())
+          val outer = getClassConstantName(data.readUnsignedShort())
+          val name = toString(data.readUnsignedShort())
+          val flags = data.readUnsignedShort()
+          InnerClassInfo(flags, name, inner, outer)
+        }
+        array(data.readUnsignedShort())(parseInnerClassInfo)
+      }
 
       def stringValue(a: AttributeInfo) = toUTF8(entryIndex(a))
 

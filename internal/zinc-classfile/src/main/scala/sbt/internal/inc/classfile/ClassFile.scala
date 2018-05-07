@@ -26,6 +26,7 @@ private[sbt] trait ClassFile {
   val sourceFile: Option[String]
   def types: Set[String]
   def stringValue(a: AttributeInfo): String
+  def innerClasses: Array[InnerClassInfo]
 
   /**
    * If the given fieldName represents a ConstantValue field, parses its representation from
@@ -85,7 +86,17 @@ private[sbt] final case class AttributeInfo(name: Option[String], value: Array[B
   def isNamed(s: String) = name.exists(s == _)
   def isSignature = isNamed("Signature")
   def isSourceFile = isNamed("SourceFile")
+  def isInnerClasses = isNamed("InnerClasses")
 }
+
+private[sbt] final case class InnerClassInfo(accessFlags: Int,
+                                             innerName: Option[String],
+                                             innerClassName: String,
+                                             outerClassName: String) {
+  def isStatic = (accessFlags & ACC_STATIC) == ACC_STATIC
+  def isPublic = (accessFlags & ACC_PUBLIC) == ACC_PUBLIC
+}
+
 private[sbt] object Constants {
   final val ACC_STATIC = 0x0008
   final val ACC_PUBLIC = 0x0001

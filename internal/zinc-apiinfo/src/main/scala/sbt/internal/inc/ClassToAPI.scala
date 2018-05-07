@@ -183,9 +183,28 @@ object ClassToAPI {
     val fields = mergeMap(c, c.getDeclaredFields, c.getFields, fieldToDef(c, cf, enclPkg))
     val constructors =
       mergeMap(c, c.getDeclaredConstructors, c.getConstructors, constructorToDef(enclPkg))
+    val cl = c.getClassLoader
+    val name = c.getCanonicalName
+    val innerClasses = new mutable.ArrayBuffer[Class[_]]()
+    val publicClasses = new mutable.ArrayBuffer[Class[_]]()
+    val it = cf.innerClasses.toIterator
+    while (it.hasNext) {
+      val info = it.next
+      try {
+        if (info.outerClassName == name) {
+          val innerClass = cl.loadClass(info.innerClassName)
+          innerClasses += innerClass
+          if (info.isPublic) {
+            publicClasses += innerClass
+          }
+        }
+      } catch {
+        case _: ClassNotFoundException => // do nothing
+      }
+    }
     val classes = merge[Class[_]](c,
-                                  c.getDeclaredClasses,
-                                  c.getClasses,
+                                  innerClasses.toArray[Class[_]],
+                                  publicClasses.toArray[Class[_]],
                                   toDefinitions(cmap),
                                   (_: Seq[Class[_]]).partition(isStatic),
                                   _.getEnclosingClass != c)
