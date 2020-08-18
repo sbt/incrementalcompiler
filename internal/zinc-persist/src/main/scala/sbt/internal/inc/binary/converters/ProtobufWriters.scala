@@ -11,6 +11,7 @@
 
 package sbt.internal.inc.binary.converters
 
+import com.github.ghik.silencer.silent
 import java.io.File
 import java.nio.file.Path
 
@@ -235,6 +236,7 @@ final class ProtobufWriters(mapper: WriteMapper) {
     builder.build
   }
 
+  @silent
   def toCompileOrder(compileOrder: CompileOrder): Schema.CompileOrder = {
     compileOrder match {
       case CompileOrder.Mixed         => Schema.CompileOrder.MIXED
