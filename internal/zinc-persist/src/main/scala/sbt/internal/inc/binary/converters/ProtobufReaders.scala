@@ -11,6 +11,7 @@
 
 package sbt.internal.inc.binary.converters
 
+import com.github.ghik.silencer.silent
 import java.nio.file.{ Path, Paths }
 import java.util
 import java.util.{ List => JList, Map => JMap }
@@ -226,7 +227,7 @@ final class ProtobufReaders(mapper: ReadMapper, currentVersion: Schema.Version) 
     compileOrder match {
       case Schema.CompileOrder.MIXED         => CompileOrder.Mixed
       case Schema.CompileOrder.JAVATHENSCALA => CompileOrder.JavaThenScala
-      case Schema.CompileOrder.SCALATHENJAVA => CompileOrder.ScalaThenJava
+      case Schema.CompileOrder.SCALATHENJAVA => CompileOrder.ScalaThenJava: @silent
       case Schema.CompileOrder.UNRECOGNIZED  => ReadersFeedback.unrecognizedOrder(id).!!
     }
   }
