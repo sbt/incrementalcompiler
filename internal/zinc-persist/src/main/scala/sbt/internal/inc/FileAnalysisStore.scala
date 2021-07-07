@@ -54,21 +54,21 @@ object FileAnalysisStore {
      * Get `CompileAnalysis` and `MiniSetup` instances for current `Analysis`.
      */
     override def get: Optional[AnalysisContents] = {
-      import JavaInterfaceUtil.EnrichOption
-      val nestedRead: Option[Option[AnalysisContents]] = allCatch.opt {
+      if (file.exists()) {
         Using.zipInputStream(new FileInputStream(file)) { inputStream =>
           lookupEntry(inputStream, analysisFileName)
           val reader = CodedInputStream.newInstance(inputStream)
           val (analysis, miniSetup) = format.read(reader)
-          val analysisWithAPIs = allCatch.opt {
+          val analysisWithAPIs = {
             lookupEntry(inputStream, companionsFileName)
             format.readAPIs(reader, analysis, miniSetup.storeApis)
           }
-
-          analysisWithAPIs.map(analysis => AnalysisContents.create(analysis, miniSetup))
+          val contents = AnalysisContents.create(analysisWithAPIs, miniSetup)
+          Optional.of(contents)
         }
+      } else {
+        Optional.empty()
       }
-      nestedRead.flatten.toOptional
     }
 
     override def unsafeGet: AnalysisContents = get.get
